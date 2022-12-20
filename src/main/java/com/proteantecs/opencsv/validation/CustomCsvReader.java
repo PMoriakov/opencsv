@@ -6,6 +6,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /*
@@ -16,6 +17,11 @@ import java.io.Reader;
 * */
 
 public class CustomCsvReader extends CSVReader {
+
+    private AtomicInteger count = new AtomicInteger(0);
+
+    private final static String LINE_NUMBER_HEADER = "lineNumber" ;
+
     /**
      * Constructs CSVReader using defaults for all parameters.
      *
@@ -25,7 +31,18 @@ public class CustomCsvReader extends CSVReader {
         super(reader);
     }
 
+    //readNextSilently method invoked only once when openCsv read first line(headers)
+    //in that case we can add new header using AtomicInteger counter
+    @Override
+    public String[] readNextSilently() throws IOException {
 
+        String[] next = super.readNextSilently();
+        // Add line number as a new header
+        if(count.get() == 0 && next != null && next.length != 0 ){
+            count.getAndIncrement();
+            return ArrayUtils.add(next, LINE_NUMBER_HEADER);
+        }else return next;
+    }
 
     @Override
     public String[] readNext() throws IOException, CsvValidationException {
